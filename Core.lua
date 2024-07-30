@@ -104,7 +104,7 @@ function addon:GetDisplayName(text, forceRealm)
 
 	local name, realm = self:ParseNameRealm(text)
 	if self.db.showRealm then
-		if self.db.foreignOnly and realm == self.realm then
+		if self.db.foreignOnly and realm == self.normalizedRealm then
 			return name
 		else
 			return text
@@ -337,7 +337,7 @@ function addon:ProcessChatMsg(name, class, text, inform, bnid)
 	elseif class ~= "GM" then
 		local _, realm = self:ParseNameRealm(name)
 		if not realm then
-			name = name.."-"..self.realm
+			name = name.."-"..self.normalizedRealm
 		end
 	end
 

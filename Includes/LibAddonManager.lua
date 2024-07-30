@@ -143,6 +143,7 @@ local pairs = pairs
 local ipairs = ipairs
 local InCombatLockdown = InCombatLockdown
 local UnitName = UnitName
+local GetRealmName = GetRealmName
 local GetNormalizedRealmName = GetNormalizedRealmName
 local UnitFactionGroup = UnitFactionGroup
 local UnitClass = UnitClass
@@ -908,7 +909,8 @@ end
 
 local function Lib_UpdatePlayerInfo()
 	PLAYER_INFO.player = UnitName("player")
-	PLAYER_INFO.realm = GetNormalizedRealmName()
+	PLAYER_INFO.realm = GetRealmName()
+	PLAYER_INFO.normalizedRealm = GetNormalizedRealmName()
 	PLAYER_INFO.faction = UnitFactionGroup("player")
 	PLAYER_INFO.class = select(2, UnitClass("player"))
 	PLAYER_INFO.race = select(2, UnitRace("player"))
