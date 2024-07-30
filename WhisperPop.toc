@@ -1,0 +1,21 @@
+## Interface: 110000, 40400, 11503
+## Title: WhisperPop
+## Version: @project-version@
+## Author: Abin
+## X-Category: Chat/Communication
+## SavedVariables: WhisperPopDB
+
+Locales\enUS.lua
+Locales\zhCN.lua
+Locales\zhTW.lua
+
+Includes\LibAddonManager.lua
+Includes\InterfaceOptionPage-1.0.lua
+Includes\VirtualScrollList-1.0.lua
+
+Core.lua
+Frames\Templates.lua
+Frames\MainFrame.lua
+Frames\MessageFrame.lua
+Frames\NotifyButton.lua
+Frames\OptionFrame.lua

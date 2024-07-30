@@ -1,0 +1,5 @@
+package-as: WhisperPop
+
+ignore:
+  - .gitignore
+  - .github/*
