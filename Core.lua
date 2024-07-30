@@ -167,9 +167,8 @@ function addon:AddTooltipText(tooltip)
 end
 
 function addon:BattlenetInvite(bnId, bnIndex)
-	-- wait for blizz to fix in 11.0
 	if FriendsFrame_BattlenetInviteByIndex then
-		-- FriendsFrame_BattlenetInviteByIndex(bnIndex)
+		FriendsFrame_BattlenetInviteByIndex(bnIndex)
 	elseif FriendsFrame_BattlenetInvite then
 		FriendsFrame_BattlenetInvite(nil, bnId)
 	end
