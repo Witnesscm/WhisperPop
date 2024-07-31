@@ -742,7 +742,7 @@ local function ComboBox_OnDisable(self)
 end
 
 local function CreateComboBox(self, text, horizontal, disableInCombat, textColor)
-	local frame = CreateSubControl(self, "Button", nil, nil, disableInCombat)
+	local frame = CreateSubControl(self, "Button", nil, "BackdropTemplate", disableInCombat)
 	frame:SetWidth(160)
 	frame:SetHeight(26)
 	frame:SetMotionScriptsWhileDisabled(true)
@@ -955,7 +955,7 @@ hooksecurefunc("ChatEdit_InsertLink", function(link)
 end)
 
 local function CreateEditBox(self, text, horizontal, disableInCombat, textColor)
-	local editbox = CreateSubControl(self, "EditBox", nil, nil, disableInCombat)
+	local editbox = CreateSubControl(self, "EditBox", nil, "BackdropTemplate", disableInCombat)
 	editbox:SetAutoFocus(false)
 	editbox.autoTrim = 1
 	editbox.handleClick = "link"

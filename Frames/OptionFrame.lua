@@ -59,13 +59,13 @@ local foreignCheck = generalGroup:AddButton(L["foreign realms"], "foreignOnly")
 foreignCheck:ClearAllPoints()
 foreignCheck:SetPoint("TOPLEFT", realmCheck, "BOTTOMLEFT", foreignCheck:GetWidth(), 0)
 
-local timeCheck = generalGroup:AddButton(L["timestamp"], "time")
-timeCheck:ClearAllPoints()
-timeCheck:SetPoint("TOPLEFT", foreignCheck, "BOTTOMLEFT", -foreignCheck:GetWidth(), 0)
+local ignoreCheck = generalGroup:AddButton(L["ignore tag messages"], "ignoreTags")
+ignoreCheck:ClearAllPoints()
+ignoreCheck:SetPoint("TOPLEFT", foreignCheck, "BOTTOMLEFT", -foreignCheck:GetWidth(), 0)
 
-generalGroup:AddButton(L["ignore tag messages"], "ignoreTags")
 generalGroup:AddButton(L["apply third-party filters"], "applyFilters")
 generalGroup:AddButton(L["save messages"], "save")
+generalGroup:AddButton(L["timestamp"], "time")
 
 function generalGroup:OnCheckInit(value)
 	return addon.db[value]
@@ -85,6 +85,31 @@ addon:RegisterOptionCallback("showRealm", function(value)
 		foreignCheck:Enable()
 	else
 		foreignCheck:Disable()
+	end
+end)
+
+local timeCombo = frame:CreateComboBox()
+timeCombo:SetPoint("TOPLEFT", generalGroup[-1], "BOTTOMLEFT")
+timeCombo:SetWidth(200)
+
+local timestamp = time()
+for value, timeFormat in ipairs(addon.TimestampFormat) do
+	timeCombo:AddLine(addon:FormatTimestamp(timeFormat, timestamp), value)
+end
+
+function timeCombo:OnComboInit()
+	return addon.db.timeFormat
+end
+
+function timeCombo:OnComboChanged(value)
+	addon.db.timeFormat = value
+end
+
+addon:RegisterOptionCallback("time", function(value)
+	if value then
+		timeCombo:Enable()
+	else
+		timeCombo:Disable()
 	end
 end)
 
@@ -109,7 +134,7 @@ end
 
 local frameLabel = frame:CreateFontString(nil, "ARTWORK", "GameFontNormal")
 frameLabel:SetText(L["frame settings"])
-frameLabel:SetPoint("TOPLEFT", generalGroup[-1], "BOTTOMLEFT", 0, -16)
+frameLabel:SetPoint("TOPLEFT", generalGroup[-1], "BOTTOMLEFT", 0, -46)
 
 local notifySlider = CreateSlider(L["button scale"], "buttonScale", "%d%%")
 notifySlider:SetPoint("TOPLEFT", frameLabel, "BOTTOMLEFT", 8, -30)

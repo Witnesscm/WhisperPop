@@ -12,6 +12,8 @@ local type = type
 local tinsert = tinsert
 local strsub = strsub
 local date = date
+local time = time
+local format = format
 local select = select
 local PlaySoundFile = PlaySoundFile
 local wipe = wipe
@@ -62,11 +64,35 @@ addon.BORDER = "Interface\\Tooltips\\UI-Tooltip-Border"
 
 addon.MAX_MESSAGES = 500 -- Maximum messages stored for each conversation
 
--- Message are saved in format of: [1/0][hh:mm:ss][contents]
+-- Message are saved in format of: [1/0][timestamp][contents]
 -- The first char is 1 if this message is inform, 0 otherwise
+addon.TimestampFormat = {
+	[1] = "%m/%d %H:%M",
+	[2] = "%m/%d %H:%M:%S",
+	[3] = "%m/%d/%y %H:%M",
+	[4] = "%m/%d/%y %H:%M:%S",
+	[5] = "%y/%m/%d %H:%M",
+	[6] = "%y/%m/%d %H:%M:%S",
+	[7] = "%Y/%m/%d %H:%M",
+	[8] = "%Y/%m/%d %H:%M:%S",
+	[9] = "%m-%d %H:%M",
+	[10] = "%m-%d %H:%M:%S",
+	[11] = "%Y-%m-%d %H:%M",
+	[12] = "%Y-%m-%d %H:%M:%S",
+}
+
+function addon:FormatTimestamp(timeFormat, timestamp)
+	return format("[%s]", date(timeFormat, timestamp))
+end
+
+function addon:GetFormattedTime(timestamp)
+	return addon:FormatTimestamp(addon.TimestampFormat[self.db.timeFormat], timestamp)
+end
+
 function addon:EncodeMessage(text, inform)
-	local timeStamp = "["..date("%m/%d %H:%M:%S").."]"
-	return (inform and "1" or "0")..timeStamp..(text or ""), timeStamp
+	local timestamp = time()
+	local formattedTime = addon:GetFormattedTime(timestamp)
+	return (inform and "1" or "0")..format("[T%d]", timestamp)..(text or ""), formattedTime
 end
 
 function addon:DecodeMessage(line)
@@ -79,9 +105,17 @@ function addon:DecodeMessage(line)
 		inform = 1
 	end
 
-	local timeStamp = strsub(line, 2, 17)
-	local text = strsub(line, 18)
-	return text, inform, timeStamp
+	local timestamp, text = strmatch(line, "^[01]%[T(%d-)%](.*)")
+	local formattedTime = timestamp and addon:GetFormattedTime(timestamp)
+	if not formattedTime then
+		formattedTime, text = strmatch(line, "^[01](%[.-%])(.*)")
+	end
+	if not formattedTime then
+		formattedTime = strsub(line, 2, 17)
+		text = strsub(line, 18)
+	end
+
+	return text, inform, formattedTime
 end
 
 -- Splits name-realm
@@ -237,6 +271,7 @@ addon.DB_DEFAULTS = {
 	receiveOnly = 0,
 	showRealm = 1,
 	foreignOnly = 1,
+	timeFormat = 2,
 	buttonScale = { min = 50, max = 200, step = 5, default = 100 },
 	listScale = { min = 50, max = 200, step = 5, default = 100 },
 	listWidth = { min = 100, max = 400, step = 5, default = 200 },
@@ -256,6 +291,10 @@ function addon:OnInitialize(db, firstTime)
 				end
 			end
 		end
+	end
+
+	if not db.timeFormat then
+		db.timeFormat = addon.DB_DEFAULTS.timeFormat
 	end
 
 	if type(db.history) ~= "table" then
@@ -363,7 +402,7 @@ function addon:ProcessChatMsg(name, class, text, inform, bnid)
 		data.received = 1
 	end
 
-	local msg, timeStamp = self:EncodeMessage(text, inform)
+	local msg, timestamp = self:EncodeMessage(text, inform)
 	tinsert(data.messages, msg)
 
 	while #data.messages > self.MAX_MESSAGES do
@@ -377,7 +416,7 @@ function addon:ProcessChatMsg(name, class, text, inform, bnid)
 		self:PlaySound()
 	end
 
-	self:BroadcastEvent("OnNewMessage", name, class, text, inform, timeStamp)
+	self:BroadcastEvent("OnNewMessage", name, class, text, inform, timestamp)
 end
 
 function addon:CHAT_MSG_WHISPER(...)
