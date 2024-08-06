@@ -16,7 +16,7 @@ local STANDARD_TEXT_FONT = STANDARD_TEXT_FONT
 local addon = WhisperPop
 local L = addon.L
 
-local frame = addon.templates.CreateFrame("WhisperPopFrame", UIParent, true)
+local frame = addon.templates.CreateFrame("WhisperPopFrame", UIParent)
 addon.frame = frame
 
 function addon:ToggleFrame()
@@ -30,7 +30,7 @@ end
 addon.OnClashCmd = addon.ToggleFrame
 
 frame.text:SetText("WhisperPop")
-frame:SetPoint("CENTER", 0, -20)
+frame.defaultPos = {"CENTER", 0, -20}
 frame:SetSize(200, 324)
 
 local list = UICreateVirtualScrollList(frame:GetName().."List", frame, 1, nil, nil, "icon")
@@ -192,5 +192,6 @@ end)
 
 addon:RegisterEventCallback("OnResetFrames", function()
 	frame:ClearAllPoints()
-	frame:SetPoint("CENTER", 0, -20)
+	frame:SetPoint(unpack(frame.defaultPos))
+	addon:SavePosition(frame)
 end)

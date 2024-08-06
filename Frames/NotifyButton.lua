@@ -22,23 +22,12 @@ addon.frame:HookScript("OnHide", function()
 	button:SetChecked(false)
 end)
 
-button:SetPoint("CENTER", 0, 160)
-button:SetMovable(true)
-button:SetUserPlaced(true)
-button:SetDontSavePosition(false)
-button:SetClampedToScreen(true)
+button.defaultPos = {"CENTER", 0, 160}
 button.icon:SetDesaturated(true)
 
 button.text = button:CreateFontString(button:GetName().."Text", "ARTWORK", "GameFontGreenSmall")
 button.text:SetPoint("LEFT", button, "RIGHT", 2, 0)
 button.text:SetFont(STANDARD_TEXT_FONT, 13, "")
-
-button:RegisterForDrag("LeftButton")
-button:SetScript("OnDragStart", button.StartMoving)
-button:SetScript("OnDragStop", function(self)
-	self:StopMovingOrSizing()
-	self.icon:SetPoint("CENTER")
-end)
 
 button:SetScript("OnClick", function(self)
 	GameTooltip:Hide()
@@ -90,7 +79,8 @@ end)
 
 addon:RegisterEventCallback("OnResetFrames", function()
 	button:ClearAllPoints()
-	button:SetPoint("CENTER", 0, 160)
+	button:SetPoint(unpack(button.defaultPos))
+	addon:SavePosition(button)
 end)
 
 addon:RegisterOptionCallback("notifyButton", function(value)

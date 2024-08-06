@@ -297,6 +297,13 @@ function addon:OnInitialize(db, firstTime)
 		db.timeFormat = addon.DB_DEFAULTS.timeFormat
 	end
 
+	if not db.positions then
+		db.positions = {}
+	end
+
+	self:SetMovable(addon.frame)
+	self:SetMovable(addon.notifyButton)
+
 	if type(db.history) ~= "table" then
 		db.history = {}
 	end
@@ -466,6 +473,70 @@ end
 function addon:CHAT_MSG_BN_WHISPER_INFORM(...)
 	local text, name, _, _, _, _, _, _, _, _, _, _, bnid = ...
 	self:ProcessChatMsg(name, "BN", text, 1, bnid)
+end
+
+------------------------------------------------------
+-- Position functions
+------------------------------------------------------
+
+function addon:SavePosition(f)
+	local x = f:GetLeft()
+	local y = f:GetTop()
+	local s = f:GetEffectiveScale()
+	x = x * s
+	y = y * s
+
+	local db = self.db
+	db = db.positions[f.key or f:GetName()]
+	db.x = x
+	db.y = y
+end
+
+function addon:LoadPosition(f)
+	local key = f.key or f:GetName()
+	local db = self.db
+	db.positions[key] = db.positions[key] or {}
+	db = db.positions[key]
+	local x = db.x
+	local y = db.y
+
+	f:ClearAllPoints()
+	if not x then
+		if f.defaultPos then
+			f:SetPoint(unpack(f.defaultPos))
+		else
+			f:SetPoint("CENTER")
+		end
+		self:SavePosition(f)
+	else
+		local s = f:GetEffectiveScale()
+		x = x / s
+		y = y / s
+		f:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", x, y)
+	end
+end
+
+local function Move_OnMouseDown(self, button)
+	if button == "LeftButton" and not self.isMoving then
+		self:StartMoving()
+		self.isMoving = true
+	end
+end
+
+local function Move_OnMouseUp(self, button)
+	if button == "LeftButton" and self.isMoving then
+		self:StopMovingOrSizing()
+		self.isMoving = false
+		addon:SavePosition(self)
+	end
+end
+
+function addon:SetMovable(f)
+	f:SetMovable(true)
+	f:SetClampedToScreen(true)
+	f:HookScript("OnMouseDown", Move_OnMouseDown)
+	f:HookScript("OnMouseUp", Move_OnMouseUp)
+	self:LoadPosition(f)
 end
 
 ------------------------------------------------------
