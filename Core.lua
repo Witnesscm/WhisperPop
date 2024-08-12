@@ -516,26 +516,22 @@ function addon:LoadPosition(f)
 	end
 end
 
-local function Move_OnMouseDown(self, button)
-	if button == "LeftButton" and not self.isMoving then
-		self:StartMoving()
-		self.isMoving = true
-	end
+local function Move_OnDragStart(self)
+	self:StartMoving()
 end
 
-local function Move_OnMouseUp(self, button)
-	if button == "LeftButton" and self.isMoving then
-		self:StopMovingOrSizing()
-		self.isMoving = false
-		addon:SavePosition(self)
-	end
+local function Move_OnDragStop(self)
+	self:StopMovingOrSizing()
+	addon:SavePosition(self)
 end
 
 function addon:SetMovable(f)
+	f:EnableMouse(true)
 	f:SetMovable(true)
 	f:SetClampedToScreen(true)
-	f:HookScript("OnMouseDown", Move_OnMouseDown)
-	f:HookScript("OnMouseUp", Move_OnMouseUp)
+	f:RegisterForDrag("LeftButton")
+	f:SetScript("OnDragStart", Move_OnDragStart)
+	f:SetScript("OnDragStop", Move_OnDragStop)
 	self:LoadPosition(f)
 end
 
