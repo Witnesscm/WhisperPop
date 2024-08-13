@@ -479,29 +479,32 @@ end
 -- Position functions
 ------------------------------------------------------
 
+function addon:Round(number, idp)
+	idp = idp or 0
+	local mult = 10 ^ idp
+	return floor(number * mult + .5) / mult
+end
+
 function addon:SavePosition(f)
-	local x = f:GetLeft()
-	local y = f:GetTop()
-	local s = f:GetEffectiveScale()
-	x = x * s
-	y = y * s
+	local orig, _, tar, x, y = f:GetPoint()
+	x = self:Round(x)
+	y = self:Round(y)
 
 	local db = self.db
-	db = db.positions[f.key or f:GetName()]
-	db.x = x
-	db.y = y
+	local key = f.key or f:GetName()
+	db.positions[key] = {orig, "UIParent", tar, x, y}
+	f:ClearAllPoints()
+	f:SetPoint(orig, "UIParent", tar, x, y)
 end
 
 function addon:LoadPosition(f)
-	local key = f.key or f:GetName()
 	local db = self.db
+	local key = f.key or f:GetName()
 	db.positions[key] = db.positions[key] or {}
-	db = db.positions[key]
-	local x = db.x
-	local y = db.y
+	local p, r, rp, x, y = unpack(db.positions[key])
 
 	f:ClearAllPoints()
-	if not x then
+	if not p then
 		if f.defaultPos then
 			f:SetPoint(unpack(f.defaultPos))
 		else
@@ -509,10 +512,7 @@ function addon:LoadPosition(f)
 		end
 		self:SavePosition(f)
 	else
-		local s = f:GetEffectiveScale()
-		x = x / s
-		y = y / s
-		f:SetPoint("TOPLEFT", UIParent, "BOTTOMLEFT", x, y)
+		f:SetPoint(p, r, rp, x, y)
 	end
 end
 
