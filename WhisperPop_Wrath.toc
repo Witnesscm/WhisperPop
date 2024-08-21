@@ -1,7 +1,8 @@
 ## Interface: 30403
 ## Title: WhisperPop
-## Version: @project-version@
 ## Author: Abin
+## Version: @project-version@
+## IconTexture: 133461
 ## X-Category: Chat/Communication
 ## SavedVariables: WhisperPopDB
 
