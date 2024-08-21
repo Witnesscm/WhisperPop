@@ -523,6 +523,10 @@ end
 local function Move_OnDragStop(self)
 	self:StopMovingOrSizing()
 	addon:SavePosition(self)
+
+	if self:GetScript("OnMouseUp") then
+		self:GetScript("OnMouseUp")(self)
+	end
 end
 
 function addon:SetMovable(f)
