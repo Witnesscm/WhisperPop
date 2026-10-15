@@ -79,7 +79,8 @@ protectCheck:SetScript("OnClick", function(self)
 end)
 
 -- The ScrollingMessageFrame that displays message text lines
-local list = CreateFrame("ScrollingMessageFrame", "WhisperPopScrollingMessageFrame", frame, "ChatFrameTemplate")
+local list = CreateFrame("ScrollingMessageFrame", "WhisperPopScrollingMessageFrame", frame)
+list:SetFontObject(ChatFontNormal)
 list:SetPoint("TOPLEFT", frame.icon, "BOTTOMLEFT", 0, -6)
 list:SetWidth(LIST_WIDTH)
 list:SetFading(false)
