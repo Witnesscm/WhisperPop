@@ -1,8 +1,8 @@
 # WhisperPop Continued
 
-Support **Midnight** (12.0.0) , **Mists of Pandaria Classic** (5.5.3) , **WotLK Classic** (3.80.0) and **Classic Era** (1.15.8) 
+Support **Midnight** (12.1.5) , **Mists of Pandaria Classic** (5.5.4) , **Titan Reforged** (3.80.2) , **Burning Crusade Classic** (2.5.6) , **Forever** (1.60.1) and **Classic Era** (1.15.9) 
 
-支持 **至暗之夜** (12.0.0) , **熊猫人之谜** (5.5.3) , **巫妖王之怒** (3.80.0) 和 **经典旧世** (1.15.8) 
+支持 **至暗之夜** (12.1.5) , **熊猫人之谜** (5.5.4) , **泰坦重铸** (3.80.2) , **燃烧的远征** (2.5.6) , **无限** (1.60.1) 和 **经典旧世** (1.15.9) 
 
 ## Install & Auto-update via WowUp
 
