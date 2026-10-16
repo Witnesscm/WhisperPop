@@ -89,14 +89,6 @@ list:SetJustifyH("LEFT")
 list:SetIndentedWordWrap(true)
 list:SetHyperlinksEnabled(true)
 
--- Get rid of junks from "ChatFrameTemplate"
-list:SetScript("OnUpdate", nil)
-list:SetScript("OnEvent", nil)
-list:UnregisterAllEvents()
-list:SetFrameStrata("MEDIUM")
-list:SetToplevel(false)
-list:Show()
-
 -- A hidden FontString to determine height of every message text
 local totalHeight = 0
 local testFont = list:CreateFontString(nil, "ARTWORK", "ChatFontNormal")
