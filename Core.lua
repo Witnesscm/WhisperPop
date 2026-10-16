@@ -15,6 +15,7 @@ local date = date
 local time = time
 local format = format
 local select = select
+local unpack = unpack
 local PlaySoundFile = PlaySoundFile
 local wipe = wipe
 local tremove = tremove
@@ -27,6 +28,7 @@ local ChatFrame_SendBNetTell = ChatFrame_SendBNetTell or ChatFrameUtil.SendBNetT
 local ChatFrame_OpenChat = ChatFrame_OpenChat or ChatFrameUtil.OpenChat
 local SendWho = C_FriendList.SendWho
 local InviteUnit = C_PartyInfo and C_PartyInfo.InviteUnit or InviteUnit
+local InChatMessagingLockdown = C_ChatInfo and C_ChatInfo.InChatMessagingLockdown
 local FriendsFrame_ShowDropdown = FriendsFrame_ShowDropdown
 local FriendsFrame_ShowBNDropdown = FriendsFrame_ShowBNDropdown
 local DEFAULT_CHAT_FRAME = DEFAULT_CHAT_FRAME
@@ -90,8 +92,7 @@ function addon:GetFormattedTime(timestamp)
 	return addon:FormatTimestamp(addon.TimestampFormat[self.db.timeFormat], timestamp)
 end
 
-function addon:EncodeMessage(text, inform)
-	local timestamp = time()
+function addon:EncodeMessage(text, inform, timestamp)
 	local formattedTime = addon:GetFormattedTime(timestamp)
 	return (inform and "1" or "0")..format("[T%d]", timestamp)..(text or ""), formattedTime
 end
@@ -158,6 +159,15 @@ function addon:GetBNInfoFromTag(tag)
 		local id, name, battleTag, _, _, _, _, online = BNGetFriendInfo(i)
 		if battleTag == tag then
 			return id, name, online, i
+		end
+	end
+end
+
+function addon:GetBattleTagFromName(name)
+	for i = 1, BNGetNumFriends() do
+		local _, accountName, battleTag = BNGetFriendInfo(i)
+		if accountName == name then
+			return battleTag
 		end
 	end
 end
@@ -332,6 +342,7 @@ function addon:OnInitialize(db, firstTime)
 	self:RegisterEvent("CHAT_MSG_WHISPER_INFORM")
 	self:RegisterEvent("CHAT_MSG_BN_WHISPER")
 	self:RegisterEvent("CHAT_MSG_BN_WHISPER_INFORM")
+	self:RegisterEvent("ADDON_RESTRICTION_STATE_CHANGED")
 
 	self:BroadcastEvent("OnListUpdate")
 end
@@ -370,11 +381,73 @@ function addon:Delete(name)
 	end
 end
 
-function addon:ProcessChatMsg(name, class, text, inform, bnid)
-	if issecretvalue and issecretvalue(text) then
+function addon:QueueSecretChatMessage(event, ...)
+	if not (InChatMessagingLockdown and InChatMessagingLockdown()) then
+		return false
+	end
+
+	local args = { n = 16 }
+	for i = 1, args.n do
+		local value = select(i, ...)
+		if not issecretvalue(value) then
+			args[i] = value
+		end
+	end
+
+	local lineID = args[11]
+	if type(lineID) ~= "number" then
+		return true
+	end
+
+	self.pendingSecretChatMessages = self.pendingSecretChatMessages or {}
+	tinsert(self.pendingSecretChatMessages, {
+		event = event,
+		timestamp = time(),
+		args = args,
+	})
+
+	return true
+end
+
+function addon:ProcessPendingSecretChatMessages()
+	local pending = self.pendingSecretChatMessages
+	if not pending or not next(pending) then
 		return
 	end
 
+	for _, message in ipairs(pending) do
+		local args = message.args
+		local lineID = args[11]
+
+		if C_ChatInfo.IsValidChatLine(lineID) then
+			local text = C_ChatInfo.GetChatLineText(lineID)
+			local name = C_ChatInfo.GetChatLineSenderName(lineID)
+			local guid = C_ChatInfo.GetChatLineSenderGUID(lineID)
+			if text and not issecretvalue(text)
+				and name and not issecretvalue(name)
+				and not issecretvalue(guid)
+			then
+				args[1] = text
+				args[2] = name
+				args[12] = guid
+
+				self.pendingChatTimestamp = message.timestamp
+				self[message.event](self, unpack(args, 1, args.n))
+				self.pendingChatTimestamp = nil
+			end
+		end
+	end
+
+	wipe(pending)
+end
+
+function addon:ADDON_RESTRICTION_STATE_CHANGED(type, state)
+	if type == Enum.AddOnRestrictionType.Chat and state == Enum.AddOnRestrictionState.Inactive then
+		self:ProcessPendingSecretChatMessages()
+	end
+end
+
+function addon:ProcessChatMsg(name, class, text, inform, bnid)
 	if type(text) ~= "string" or type(name) ~= "string" then
 		return
 	end
@@ -392,7 +465,11 @@ function addon:ProcessChatMsg(name, class, text, inform, bnid)
 
 	-- Names must be in the "name-realm" format except for BN friends
 	if class == "BN" then
-		name = select(3, BNGetFriendInfoByID(bnid or 0)) -- Seemingly better than my original solution, credits to Warbaby
+		local battleTag = bnid and select(3, BNGetFriendInfoByID(bnid))
+		if not battleTag and type(name) == "string" then
+			battleTag = self:GetBattleTagFromName(name)
+		end
+		name = battleTag
 		if not name then
 			return
 		end
@@ -426,7 +503,8 @@ function addon:ProcessChatMsg(name, class, text, inform, bnid)
 		data.received = 1
 	end
 
-	local msg, timestamp = self:EncodeMessage(text, inform)
+	local timestamp = self.pendingChatTimestamp or time()
+	local msg, formattedTime = self:EncodeMessage(text, inform, timestamp)
 	tinsert(data.messages, msg)
 
 	while #data.messages > self.MAX_MESSAGES do
@@ -436,14 +514,18 @@ function addon:ProcessChatMsg(name, class, text, inform, bnid)
 	self:BroadcastEvent("OnListUpdate")
 
 	-- It's a new message
-	if not inform and self.db.sound then
+	if not inform and self.db.sound and not self.pendingChatTimestamp then
 		self:PlaySound()
 	end
 
-	self:BroadcastEvent("OnNewMessage", name, class, text, inform, timestamp)
+	self:BroadcastEvent("OnNewMessage", name, class, text, inform, formattedTime)
 end
 
 function addon:CHAT_MSG_WHISPER(...)
+	if self:QueueSecretChatMessage("CHAT_MSG_WHISPER", ...) then
+		return
+	end
+
 	local text, name, _, _, _, flag, _, _, _, _, _, guid, _, _, _, hide = ...
 	if hide then
 		return
@@ -477,6 +559,10 @@ function addon:CHAT_MSG_WHISPER(...)
 end
 
 function addon:CHAT_MSG_WHISPER_INFORM(...)
+	if self:QueueSecretChatMessage("CHAT_MSG_WHISPER_INFORM", ...) then
+		return
+	end
+
 	local text, name, _, _, _, flag, _, _, _, _, _, guid = ...
 	if flag == "GM" or flag == "DEV" or (GMChatFrame_IsGM and GMChatFrame_IsGM(name)) then
 		flag = "GM"
@@ -488,11 +574,19 @@ function addon:CHAT_MSG_WHISPER_INFORM(...)
 end
 
 function addon:CHAT_MSG_BN_WHISPER(...)
+	if self:QueueSecretChatMessage("CHAT_MSG_BN_WHISPER", ...) then
+		return
+	end
+
 	local text, name, _, _, _, _, _, _, _, _, _, _, bnid = ...
 	self:ProcessChatMsg(name, "BN", text, nil, bnid)
 end
 
 function addon:CHAT_MSG_BN_WHISPER_INFORM(...)
+	if self:QueueSecretChatMessage("CHAT_MSG_BN_WHISPER_INFORM", ...) then
+		return
+	end
+
 	local text, name, _, _, _, _, _, _, _, _, _, _, bnid = ...
 	self:ProcessChatMsg(name, "BN", text, 1, bnid)
 end
