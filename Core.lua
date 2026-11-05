@@ -163,13 +163,19 @@ function addon:GetBNInfoFromTag(tag)
 	end
 end
 
+local BNNameToTag = {}
 function addon:GetBattleTagFromName(name)
-	for i = 1, BNGetNumFriends() do
-		local _, accountName, battleTag = BNGetFriendInfo(i)
-		if accountName == name then
-			return battleTag
+	if not BNNameToTag[name] then
+		for i = 1, BNGetNumFriends() do
+			local _, accountName, battleTag = BNGetFriendInfo(i)
+			if accountName == name then
+				BNNameToTag[name] = battleTag
+				break
+			end
 		end
 	end
+
+	return BNNameToTag[name]
 end
 
 function addon:IsBattleTag(name)
@@ -230,12 +236,16 @@ function addon:BattlenetInvite(bnId, bnIndex)
 	end
 end
 
--- Temporary fix
+-- Temporary fix copy 
 hooksecurefunc("CopyToClipboard", function(text)
 	if text and addon.currentName and strfind(addon.currentName, text) then
 		ChatFrame_OpenChat(addon.currentName, SELECTED_DOCK_FRAME)
 	end
 end)
+
+if GameEvent then
+	GameEvent.UnregisterInternalEvent("ADDON_ACTION_FORBIDDEN")
+end
 
 function addon:HandleAction(name, action)
 	if type(name) ~= "string" then
