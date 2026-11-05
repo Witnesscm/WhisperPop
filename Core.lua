@@ -19,6 +19,7 @@ local unpack = unpack
 local PlaySoundFile = PlaySoundFile
 local wipe = wipe
 local tremove = tremove
+local Ambiguate = Ambiguate
 local GetPlayerInfoByGUID = GetPlayerInfoByGUID
 local BNGetNumFriends = BNGetNumFriends
 local GMChatFrame_IsGM = GMChatFrame_IsGM
@@ -259,6 +260,8 @@ function addon:HandleAction(name, action)
 			return
 		end
 	end
+
+	name = Ambiguate(name, "none")
 
 	if action == "MENU" then
 		if bnId then
