@@ -238,7 +238,7 @@ end
 
 -- Temporary fix copy 
 hooksecurefunc("CopyToClipboard", function(text)
-	if text and addon.currentName and strfind(addon.currentName, text) then
+	if text and addon.currentName and (strfind(addon.currentName, text) or text == addon.currentName) then
 		ChatFrame_OpenChat(addon.currentName, SELECTED_DOCK_FRAME)
 	end
 end)
