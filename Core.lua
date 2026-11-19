@@ -268,7 +268,11 @@ function addon:HandleAction(name, action)
 		end
 	end
 
-	name = Ambiguate(name, "none")
+	if addon.UniqueNamesEnabled then
+		name = self:ParseNameRealm(name)
+	else
+		name = Ambiguate(name, "none")
+	end
 
 	if action == "MENU" then
 		if bnId then
