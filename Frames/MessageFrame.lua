@@ -17,7 +17,7 @@ local ICON_TAG_LIST = ICON_TAG_LIST
 local GetMouseFocus = GetMouseFocus or function()
 	local frames = _G.GetMouseFoci()
 	return frames and frames[1]
-  end
+end
 
 local addon = WhisperPop
 local L = addon.L
