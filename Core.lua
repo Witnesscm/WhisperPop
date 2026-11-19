@@ -68,6 +68,8 @@ addon.BORDER = "Interface\\Tooltips\\UI-Tooltip-Border"
 
 addon.MAX_MESSAGES = 500 -- Maximum messages stored for each conversation
 
+addon.UniqueNamesEnabled = RegionalUniqueNamesEnabled and RegionalUniqueNamesEnabled() or false
+
 -- Message are saved in format of: [1/0][timestamp][contents]
 -- The first char is 1 if this message is inform, 0 otherwise
 addon.TimestampFormat = {
@@ -135,11 +137,16 @@ function addon:GetDisplayName(text, forceRealm)
 		return name or text
 	end
 
+	local name, realm = self:ParseNameRealm(text)
+
+	if addon.UniqueNamesEnabled then
+		return name
+	end
+
 	if forceRealm then
 		return text
 	end
 
-	local name, realm = self:ParseNameRealm(text)
 	if self.db.showRealm then
 		if self.db.foreignOnly and realm == self.normalizedRealm then
 			return name
